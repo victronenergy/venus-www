@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Venus GX - SSL certifcate note</title>
+
+<script type="text/javascript">
+
+function qs(key)
+{
+    var vars = [], hash;
+    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+    for (var i = 0; i < hashes.length; i++) {
+        hash = hashes[i].split('=');
+        vars.push(hash[0]);
+        vars[hash[0]] = hash[1];
+    }
+    return vars[key];
+}
+
+function httpsUrl()
+{
+    var page = qs("page");
+    var url = 'https://' + window.location.hostname + (page ? page: '/');
+    return url;
+}
+
+</script>
+
+</head>
+<body>
+    <script src="browser_detection.js"></script>
+    <div class="outer_container explanation">
+        <img src="victron_logo.png" alt="Victron logo" class="victron_logo">
+        <div class="inner_container explanation">
+            <img src="info_icon.png" alt="Info icon" class="info_icon">
+            <h3 class="header">Note before you continue</h3>
+            <div class="note_body">
+                <p>Connecting to your GX device locally uses self-signed SSL, causing browsers to flag it as untrusted.
+                    This happens because valid SSL certificates can't be issued for LAN addresses.
+                </p>
+                <p>
+                   Please accept the warning to proceed - your browser will remember your choice.
+                </p>
+                <div class="browser_instructions">
+                    <h4 id="browser_heading"></h4>
+                    <ol id="browser_instructions">
+                    </ol>
+                </div>
+            </div>
+
+            <button class="continue" onclick="window.location.href = httpsUrl();">Continue</button>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,105 @@
+.outer_container.auth {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.inner_container.auth {
+    padding: 50px 20px;
+    margin: auto;
+    display: table;
+    text-align: center;
+}
+
+.outer_container.explanation {
+    position: relative;
+}
+
+.inner_container.explanation {
+    padding: 50px 20px;
+}
+
+.victron_logo {
+    width: 50px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.info_icon {
+    width: 40px;
+}
+
+.header {
+    margin-top: 5px;
+}
+
+.continue {
+    background-color: #0066B3;
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    width: 90%;
+    cursor: pointer;
+
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.browser_instructions {
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+body {
+    background-color: #000;
+    color: #fff;
+    font-family: sans-serif;
+    line-height: 22px;
+}
+
+@media only screen and (min-width: 576px) {
+    .outer_container {
+        width: 70vw;
+        min-height: 60vh;
+
+        margin: auto;
+        margin-top: 60px;
+
+        border: 2px solid #0066B3;
+        border-radius: 30px;
+
+        .victron_logo {
+            width: 70px;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .info_icon {
+            width: 50px;
+        }
+
+        .inner_container {
+            padding: 25px 50px;
+        }
+
+        .continue {
+            width: 220px;
+            position: static;
+            transform: none;
+        }
+    }
+}
+
+@media only screen and (min-width: 992px) {
+    .note_body {
+        max-width: 60%;
+    }
+}
