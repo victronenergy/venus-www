@@ -27,10 +27,19 @@ function httpsUrl()
     return url;
 }
 
+function checkOnLoad()
+{
+    var page = qs("page");
+    if (page && page.startsWith("/app")) {
+        div = document.getElementById("mfd_note");
+        div.style.display = "block";
+    }
+}
+
 </script>
 
 </head>
-<body>
+<body onload="checkOnLoad();">
     <script src="browser_detection.js"></script>
     <div class="outer_container explanation">
         <img src="victron_logo.png" alt="Victron logo" class="victron_logo">
@@ -44,6 +53,15 @@ function httpsUrl()
                 <p>
                    Please accept the warning to proceed - your browser will remember your choice.
                 </p>
+                <div id="mfd_note" style="display:none">
+                  <BR>
+                  <h3 class="header">Marine MFD app</h3>
+                  <p>
+                     Multi functional displays might not support a secure connection.
+                     To make the Victron app work on such a display, change this setting on the Victron GX device (and not on this MFD):<BR>
+                     'Settings&nbsp;>&nbsp;General&nbsp;>&nbsp;Network&nbsp;Security&nbsp;Level' to 'Insecure'.
+                  </p>
+                </div>
                 <div class="browser_instructions">
                     <h4 id="browser_heading"></h4>
                     <ol id="browser_instructions">
