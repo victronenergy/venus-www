@@ -1,3 +1,11 @@
+.outer_container.profile {
+    position: relative;
+}
+
+.inner_container.profile {
+    padding: 50px 50px;
+}
+
 .outer_container.auth {
     position: relative;
     display: flex;
@@ -20,7 +28,7 @@
 }
 
 .victron_logo {
-    width: 50px;
+    width: 70px;
     position: absolute;
     top: 10px;
     right: 10px;
@@ -52,6 +60,11 @@
     transform: translateX(-50%);
 }
 
+.instructions {
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
 .browser_instructions {
     margin-top: 30px;
     margin-bottom: 30px;
@@ -76,8 +89,6 @@ body {
         border-radius: 30px;
 
         .victron_logo {
-            width: 70px;
-            position: absolute;
             top: 20px;
             right: 20px;
         }
@@ -87,7 +98,7 @@ body {
         }
 
         .inner_container {
-            padding: 25px 50px;
+            padding: 60px 50px;
         }
 
         .continue {

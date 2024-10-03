@@ -41,13 +41,15 @@ if ($configured) {
 <html>
 	<head>
 		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Login</title>
 		<link rel="stylesheet" href="styles.css">
 	</head>
-	<div class="outer_container auth">
-		<img src="victron_logo.png" alt="Victron logo" class="victron_logo">
-		<div class="inner_container auth">
-			<?php if ($configured) { ?>
+	<body>
+	<?php if ($configured) { ?>
+		<div class="outer_container auth">
+			<img src="victron_logo.png" alt="Victron logo" class="victron_logo">
+			<div class="inner_container auth">
 				<div class="login">
 					<h1 class="header">Venus GX login</h1>
 					<form method="post">
@@ -58,11 +60,25 @@ if ($configured) {
 						<input type="submit" class="continue" value="Login">
 					</form>
 				</div>
-			<?php } else { ?>
-				<h1 class="header">A security profile has not been selected!</h1>
-				A security profile can be selected on the display from the Settings -> General menu.
-			<?php } ?>
+			</div>
 		</div>
+	<?php } else { ?>
+		<div class="outer_container profile">
+			<img src="victron_logo.png" alt="Victron logo" class="victron_logo">
+			<div class="inner_container profile">
+			<h3 class="header">A network security profile has not been selected</h3>
+			<div class="note_body">
+				<p>To access the GX via your web browser, first select a security profile.</p>
+				<div class="instructions">
+					<h4>There are 2 methods available:</h4>
+					<ul>
+						<li>Method 1: On the GX touch screen, navigate to Settings, General menu.</li>
+						<li>Method 2: Using the VictronConnect App, connect with Bluetooth and there select the profile.</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	<?php } ?>
 	</body>
 </html>
 
