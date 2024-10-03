@@ -71,8 +71,6 @@
 }
 
 body {
-    background-color: #000;
-    color: #fff;
     font-family: sans-serif;
     line-height: 22px;
 }
@@ -112,5 +110,12 @@ body {
 @media only screen and (min-width: 992px) {
     .note_body {
         max-width: 60%;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background: black;
+        color: white
     }
 }
