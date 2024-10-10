@@ -27,6 +27,25 @@ function httpsUrl()
     return url;
 }
 
+async function tryHttps() {
+	try {
+		// this can be set to any location, for which CORS are setup to make it work..
+		const response = await fetch('https://' + location.hostname + "/gui-v1", {cache: "no-cache"});
+		if (response.ok && response.status == "200") {
+			return true;
+		}
+	} catch (error) {
+	}
+
+	return false;
+}
+
+async function checkHttps() {
+	const ok = await tryHttps();
+	if (ok)
+		location.href = httpsUrl();
+}
+
 function checkOnLoad()
 {
     var page = qs("page");
@@ -34,6 +53,8 @@ function checkOnLoad()
         div = document.getElementById("mfd_note");
         div.style.display = "block";
     }
+
+    checkHttps();
 }
 
 </script>
