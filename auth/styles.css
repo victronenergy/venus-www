@@ -70,6 +70,10 @@
     margin-bottom: 30px;
 }
 
+input {
+    font-size: 16px;
+}
+
 body {
     font-family: sans-serif;
     line-height: 22px;
