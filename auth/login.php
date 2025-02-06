@@ -51,7 +51,7 @@ if ($configured) {
 			<img src="victron_logo.png" alt="Victron logo" class="victron_logo">
 			<div class="inner_container auth">
 				<div class="login">
-					<h1 class="header">Venus GX login</h1>
+					<h1 class="header">GX device login</h1>
 					<form method="post">
 						<input type="text" value="remoteconsole" name="username" id="username" autocomplete="username" style="display:none;">
 						Password: <input type="password" name="password" id="password" autocomplete="new-password" required><BR>
