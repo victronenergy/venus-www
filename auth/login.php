@@ -54,8 +54,8 @@ if ($configured) {
 					<h1 class="header">GX device login</h1>
 					<form method="post">
 						<input type="text" value="remoteconsole" name="username" id="username" autocomplete="username" style="display:none;">
-						Password: <input type="password" name="password" id="password" autocomplete="new-password" required><BR>
-						<?php if ($wrong_passwd) print("<span style='color: red'>Incorrect password</span>"); ?>
+						GX Password: <input type="password" name="password" id="password" autocomplete="new-password" required><BR>
+						<?php if ($wrong_passwd) print("<span style='color: red'>Incorrect GX password</span>"); ?>
 						<BR><BR>
 						<input type="submit" class="continue" value="Login">
 					</form>
