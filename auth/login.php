@@ -52,6 +52,12 @@ if ($auth_status == VenusAuthStatus::Allowed) {
 				</div>
 			</div>
 		</div>
+		<script>
+			// Focus on the password field when the page loads
+			document.addEventListener("DOMContentLoaded", function() {
+				document.getElementById("password").focus();
+			});
+		</script>
 	<?php } else { ?>
 		<div class="outer_container profile">
 			<img src="victron_logo.png" alt="Victron logo" class="victron_logo">
