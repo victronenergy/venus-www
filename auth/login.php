@@ -30,8 +30,8 @@ if ($auth_status == VenusAuthStatus::Allowed) {
 				<div class="login">
 					<h1 class="header">GX device login</h1>
 					<form method="post">
-						<input type="text" value="remoteconsole" name="username" id="username" autocomplete="username" style="display:none;">
-						GX Password: <input type="password" name="password" id="password" autocomplete="new-password" required><BR>
+						<p><input type="text" value="remoteconsole" name="username" id="username" autocomplete="username" style="display:none;">
+						GX Password: <input type="password" name="password" id="password" autocomplete="new-password" required></p>
 						<?php
 							if ($auth_status === VenusAuthStatus::WrongPassword)
 								print("<p style='color: red'>Incorrect GX password</p>");
@@ -47,8 +47,7 @@ if ($auth_status == VenusAuthStatus::Allowed) {
 								}
 							}
 						?>
-						<BR><BR>
-						<input type="submit" class="continue" value="Login">
+						<p><input type="submit" class="continue" value="Login"></p>
 					</form>
 				</div>
 			</div>
@@ -72,4 +71,3 @@ if ($auth_status == VenusAuthStatus::Allowed) {
 	<?php } ?>
 	</body>
 </html>
-
