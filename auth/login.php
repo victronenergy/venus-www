@@ -5,6 +5,60 @@ $pwd_file = "/data/conf/vncpassword.txt";
 $wrong_passwd = false;
 $configured = file_exists($pwd_file);
 
+/*
+ * Implementation of a 'bucket with tokens' algorithm. Hard-coded to 10 initial tokens in the
+ * bucket, re-fill one per second back to 10.
+ */
+function check_rate_limit() {
+	$burst_limit = 10;
+	$rate_limit_file="/tmp/php_auth_rate_limit_Z7iPAbefnKrmLITn.txt";
+	$f = fopen($rate_limit_file, "c+");
+
+	if ($f === false) {
+		http_response_code(500); // Internal Server Error
+		exit();
+	}
+
+	flock($f, LOCK_EX);
+
+	$rate_state = [ 'last_attempt_at' => 0, 'tokens_left' => $burst_limit ];
+	$serialized_data = trim(fgets($f));
+
+	if ($serialized_data) {
+		$unserialize_result = @unserialize($serialized_data);
+		if ($unserialize_result !== false)
+			$rate_state = $unserialize_result;
+	}
+
+	// First replenish tokens at one per sec.
+	$seconds_diff = max(hrtime()[0] - $rate_state['last_attempt_at'], 0);
+	$new_token_count = min($burst_limit, $seconds_diff + $rate_state['tokens_left']);
+	$rate_state['tokens_left'] = $new_token_count;
+
+	$allow = true;
+
+	if ($rate_state['tokens_left'] > 0)
+		$rate_state['tokens_left']--;
+	else
+		$allow = false;
+
+	$rate_state['last_attempt_at'] = hrtime()[0];
+
+	$new_serialized_data = serialize($rate_state);
+	ftruncate($f, 0);
+	fseek($f, 0);
+	fwrite($f, $new_serialized_data);
+	fclose($f);
+
+	if (!$allow) {
+		$sleep_time = random_int(500000, 1500000);
+		usleep($sleep_time);
+
+		http_response_code(429);
+		exit();
+	}
+}
+
 if ($configured) {
 	$hash = @file_get_contents("/data/conf/vncpassword.txt");
 	if ($hash === false) {
@@ -19,6 +73,9 @@ if ($configured) {
 		exit();
 	}
 
+	if (isset($_POST['password']))
+		check_rate_limit();
+
 	require('session.php');
 	venus_session_start();
 
@@ -30,6 +87,9 @@ if ($configured) {
 			header("Location: " . $page);
 			exit();
 		} else {
+			$sleep_time = random_int(500000, 1500000);
+			usleep($sleep_time);
+
 			session_destroy();
 			$wrong_passwd = true;
 		}
