@@ -1,39 +1,15 @@
 <?php
 
+require('session.php');
+
 $page = isset($_GET["page"]) && $_GET["page"] != "" ? $_GET["page"] : "/";
-$pwd_file = "/data/conf/vncpassword.txt";
-$wrong_passwd = false;
-$configured = file_exists($pwd_file);
 
-if ($configured) {
-	$hash = @file_get_contents("/data/conf/vncpassword.txt");
-	if ($hash === false) {
-		http_response_code(500); // Internal Server Error
-		exit();
-	}
+$auth_status = venus_authenticate_session($_POST['password'] ?? null);
 
-	$hash = trim($hash);
-	if ($hash == "") {
-		http_response_code(303); // See Other
-		header("Location: " . $page);
-		exit();
-	}
-
-	require('session.php');
-	venus_session_start();
-
-	if (isset($_POST['password'])) {
-		if ($hash == "" || password_verify($_POST['password'], $hash)) {
-			$_SESSION["remoteconsole-authenticated"] = true;
-
-			http_response_code(303); // See Other
-			header("Location: " . $page);
-			exit();
-		} else {
-			session_destroy();
-			$wrong_passwd = true;
-		}
-	}
+if ($auth_status == VenusAuthStatus::Allowed) {
+	http_response_code(303); // See Other
+	header("Location: " . $page);
+	exit();
 }
 
 ?>
@@ -46,7 +22,7 @@ if ($configured) {
 		<link rel="stylesheet" href="styles.css">
 	</head>
 	<body>
-	<?php if ($configured) { ?>
+	<?php if ($auth_status !== VenusAuthStatus::NotConfigured) { ?>
 		<div class="outer_container auth">
 			<img src="victron_logo.png" alt="Victron logo" class="victron_logo">
 			<div class="inner_container auth">
@@ -55,7 +31,7 @@ if ($configured) {
 					<form method="post">
 						<input type="text" value="remoteconsole" name="username" id="username" autocomplete="username" style="display:none;">
 						GX Password: <input type="password" name="password" id="password" autocomplete="new-password" required><BR>
-						<?php if ($wrong_passwd) print("<span style='color: red'>Incorrect GX password</span>"); ?>
+						<?php if ($auth_status === VenusAuthStatus::WrongPassword) print("<span style='color: red'>Incorrect GX password</span>"); ?>
 						<BR><BR>
 						<input type="submit" class="continue" value="Login">
 					</form>
