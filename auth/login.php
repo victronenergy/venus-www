@@ -4,7 +4,8 @@ require('session.php');
 
 $page = isset($_GET["page"]) && $_GET["page"] != "" ? $_GET["page"] : "/";
 
-$auth_status = venus_authenticate_session($_POST['password'] ?? null);
+$info = null;
+$auth_status = venus_authenticate_session($_POST['password'] ?? null, $info);
 
 if ($auth_status == VenusAuthStatus::Allowed) {
 	http_response_code(303); // See Other
@@ -31,7 +32,21 @@ if ($auth_status == VenusAuthStatus::Allowed) {
 					<form method="post">
 						<input type="text" value="remoteconsole" name="username" id="username" autocomplete="username" style="display:none;">
 						GX Password: <input type="password" name="password" id="password" autocomplete="new-password" required><BR>
-						<?php if ($auth_status === VenusAuthStatus::WrongPassword) print("<span style='color: red'>Incorrect GX password</span>"); ?>
+						<?php
+							if ($auth_status === VenusAuthStatus::WrongPassword)
+								print("<p style='color: red'>Incorrect GX password</p>");
+
+							if ($auth_status === VenusAuthStatus::WrongPassword || $auth_status === VenusAuthStatus::LockedOut) {
+								$locked_duration = $info->lockedOutDuration();
+								if ($locked_duration) {
+									$hours = floor($locked_duration / 3600);
+									$minutes = floor(($locked_duration % 3600) / 60);
+									$seconds = $locked_duration % 60;
+									$time = "{$hours}h {$minutes}m {$seconds}s";
+									print("<p style='color: red'>Too many invalid login attempts. This device is locked for $time</p>");
+								}
+							}
+						?>
 						<BR><BR>
 						<input type="submit" class="continue" value="Login">
 					</form>
