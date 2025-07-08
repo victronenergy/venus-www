@@ -25,7 +25,7 @@ function venus_session_start(bool $readonly = false)
 }
 
 // only check if a password is valid
-function venus_authenticate(string $password): VenusAuthStatus
+function venus_authenticate(?string $password): VenusAuthStatus
 {
 	$configured = file_exists(PWD_FILE);
 	if (!$configured)
@@ -38,8 +38,11 @@ function venus_authenticate(string $password): VenusAuthStatus
 	}
 
 	$hash = trim($hash);
-	if ($hash == "")
+	if ($hash === "")
 		return VenusAuthStatus::Allowed;
+
+	if (is_null($password))
+		return VenusAuthStatus::PasswordRequired;
 
 	if (password_verify($password, $hash))
 		return VenusAuthStatus::Allowed;
@@ -53,10 +56,7 @@ function venus_authenticate_basic_auth(): VenusAuthStatus
 	if ($_SERVER['PHP_AUTH_USER'] !== "remoteconsole")
 		return VenusAuthStatus::InvalidUser;
 
-	if (!isset($_SERVER['PHP_AUTH_PW']))
-		return VenusAuthStatus::PasswordRequired;
-
-	return venus_authenticate($_SERVER['PHP_AUTH_PW']);
+	return venus_authenticate($_SERVER['PHP_AUTH_PW'] ?? null);
 }
 
 /*
@@ -70,13 +70,9 @@ function venus_authenticate_session(?string $password = null): VenusAuthStatus
 {
 	venus_session_start();
 
-	if (!is_null($password)) {
-		$status = venus_authenticate($password);
-		if ($status === VenusAuthStatus::Allowed)
-			$_SESSION["remoteconsole-authenticated"] = true;
-		else
-			session_destroy();
-
+	$status = venus_authenticate($password);
+	if ($status === VenusAuthStatus::Allowed) {
+		$_SESSION["remoteconsole-authenticated"] = true;
 		return $status;
 	}
 
@@ -84,6 +80,6 @@ function venus_authenticate_session(?string $password = null): VenusAuthStatus
 		return VenusAuthStatus::Allowed;
 
 	session_destroy();
-	return VenusAuthStatus::PasswordRequired;
+	return $status;
 }
 ?>

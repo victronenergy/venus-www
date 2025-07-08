@@ -12,7 +12,6 @@ case VenusAuthStatus::PasswordRequired;
 	http_response_code(401); // Authentication required
 	exit();
 default;
-	session_destroy();
 	http_response_code(400); // Bad Request
 	break;
 }
