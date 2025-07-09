@@ -29,15 +29,20 @@ if ($auth_status == VenusAuthStatus::Allowed) {
 				<div class="login">
 					<h1 class="header">GX device login</h1>
 					<form method="post">
-						<input type="text" value="remoteconsole" name="username" id="username" autocomplete="username" style="display:none;">
-						GX Password: <input type="password" name="password" id="password" autocomplete="new-password" required><BR>
-						<?php if ($auth_status === VenusAuthStatus::WrongPassword) print("<span style='color: red'>Incorrect GX password</span>"); ?>
-						<BR><BR>
-						<input type="submit" class="continue" value="Login">
+						<p><input type="text" value="remoteconsole" name="username" id="username" autocomplete="username" style="display:none;">
+						GX Password: <input type="password" name="password" id="password" autocomplete="new-password" required></p>
+						<?php if ($auth_status === VenusAuthStatus::WrongPassword) print("<p style=\"color: #ff0000\">Incorrect GX password</p>"); ?>
+						<p><input type="submit" class="continue" value="Login"></p>
 					</form>
 				</div>
 			</div>
 		</div>
+		<script>
+			// Focus on the password field when the page loads
+			document.addEventListener("DOMContentLoaded", function() {
+				document.getElementById("password").focus();
+			});
+		</script>
 	<?php } else { ?>
 		<div class="outer_container profile">
 			<img src="victron_logo.png" alt="Victron logo" class="victron_logo">
@@ -57,4 +62,3 @@ if ($auth_status == VenusAuthStatus::Allowed) {
 	<?php } ?>
 	</body>
 </html>
-
