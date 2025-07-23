@@ -2,10 +2,10 @@
 
 /*
  * Allow to add a token by an authenticated user, for testing:
- * curl -k -v --user "remoteconsole:00000000" -d "role=test&device_id=test" https://xxx.xxx.xxx.xxx/auth/generate-token.php
+ * curl -k -v --user "remoteconsole:00000000" -d "role=test&device_id=test" https://xxx.xxx.xxx.xxx/auth/generate-token/
  */
 
-require('session.php');
+require('../session.php');
 
 function generate_random_string(int $length = 32): string
 {
