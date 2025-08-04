@@ -127,4 +127,3 @@ try {
 header('Content-Type: application/json');
 print($j . "\n");
 
-?>

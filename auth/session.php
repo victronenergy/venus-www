@@ -224,4 +224,3 @@ function venus_authenticate_session(?string $password = null, &$info = null): Ve
 	session_destroy();
 	return $status;
 }
-?>
