@@ -1,5 +1,11 @@
 <?php
 
+/*
+ * To avoid errors from breaking http_response_code(). This makes development harder, but there
+ * is no good way around this.
+ */
+error_reporting(0);
+
 define("PWD_FILE", "/data/conf/vncpassword.txt");
 define("RATELIMIT_FILE", "/tmp/test.json");
 define("MAX_LOGIN_ATTEMPTS", 10);
@@ -22,13 +28,16 @@ enum VenusAuthStatus: string {
 
 function venus_session_start(bool $readonly = false)
 {
-	session_start([
+	if (session_start([
 		'cookie_lifetime' => 365 * 24 * 60 * 60,
 		'gc_maxlifetime' => 365 * 24 * 60 * 60,
 		'read_and_close'  => $readonly,
 		'name' => 'VENUS_SESSION_ID',
 		'save_path' => '/data/var/lib/venus-www-sessions'
-	]);
+	]) === false) {
+			http_response_code(500); // Internal Server Error
+			exit();
+	}
 }
 
 class LockedOutInfo implements JsonSerializable {
