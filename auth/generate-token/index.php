@@ -86,13 +86,45 @@ function get_query_argument(string $arg_name): ?string
 	return $val;
 }
 
+// Venus Platform sets the pairing mode.
+function in_pairing_mode() : bool
+{
+	static $signal_file = "/var/volatile/tokens/pairing.json";
+
+	if (!file_exists($signal_file))
+		return false;
+
+	$bytes = file_get_contents($signal_file);
+
+	if ($bytes === false)
+		return false;
+
+	$data = json_decode($bytes);
+
+	if ($data === false)
+		return false;
+
+	if (!property_exists($data, 'expires_at'))
+		return false;
+
+	$expires_at = intval($data->expires_at);
+	return $expires_at > time();
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 	http_response_code(400);
 	print("Method must be POST\n");
 	exit();
 }
 
-$auth_state = venus_authenticate_basic_auth();
+$auth_state = VenusAuthStatus::PasswordRequired;
+
+if (in_pairing_mode()) {
+	$auth_state = VenusAuthStatus::Allowed;
+}
+else {
+	$auth_state = venus_authenticate_basic_auth();
+}
 
 if ($auth_state != VenusAuthStatus::Allowed && $auth_state != VenusAuthStatus::AllowedUnsecured) {
 	http_response_code(403);
