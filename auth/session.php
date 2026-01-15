@@ -12,9 +12,11 @@ define("MAX_LOGIN_ATTEMPTS", 10);
 define("MAX_LOCK_LEVEL", 6);
 define("LOCKOUT_TIME", (2 * 60));
 define("LOCKOUT_IDLE_RESET", (24 * 60 * 60));
+define("SESSION_ID", "VENUS_SESSION_ID");
 
 enum VenusAuthStatus: string {
 	case Allowed = "Allowed";
+	case AllowedUnsecured = "AllowedUnsecured";
 	case NotConfigured = "NotConfigured";
 	case WrongPassword = "WrongPassword";
 	case PasswordRequired = "PasswordRequired";
@@ -32,7 +34,7 @@ function venus_session_start(bool $readonly = false)
 		'cookie_lifetime' => 365 * 24 * 60 * 60,
 		'gc_maxlifetime' => 365 * 24 * 60 * 60,
 		'read_and_close'  => $readonly,
-		'name' => 'VENUS_SESSION_ID',
+		'name' => SESSION_ID,
 		'save_path' => '/data/var/lib/venus-www-sessions'
 	]) === false) {
 			http_response_code(500); // Internal Server Error
@@ -177,7 +179,7 @@ function venus_authenticate(?string $password, &$info = null): VenusAuthStatus
 
 	$hash = trim($hash);
 	if ($hash === "")
-		return VenusAuthStatus::Allowed;
+		return VenusAuthStatus::AllowedUnsecured;
 
 	if (is_null($password))
 		return VenusAuthStatus::PasswordRequired;
@@ -220,17 +222,26 @@ function venus_authenticate_basic_auth(&$info = null): VenusAuthStatus
  */
 function venus_authenticate_session(?string $password = null, &$info = null): VenusAuthStatus
 {
-	venus_session_start();
-
 	$status = venus_authenticate($password, $info);
+
+	// note: don't start a session in this case, since requests without proper cookie
+	// support will cause lots of session files.
+	if ($status === VenusAuthStatus::AllowedUnsecured)
+		return $status;
+
 	if ($status === VenusAuthStatus::Allowed) {
+		venus_session_start();
 		$_SESSION["remoteconsole-authenticated"] = true;
 		return $status;
 	}
 
+	if (!isset($_COOKIE[SESSION_ID]))
+		return $status;
+
+	venus_session_start();
+
 	if (!empty($_SESSION["remoteconsole-authenticated"]))
 		return VenusAuthStatus::Allowed;
 
-	session_destroy();
 	return $status;
 }

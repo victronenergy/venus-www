@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $auth_state = venus_authenticate_basic_auth();
 
-if ($auth_state != VenusAuthStatus::Allowed) {
+if ($auth_state != VenusAuthStatus::Allowed && $auth_state != VenusAuthStatus::AllowedUnsecured) {
 	http_response_code(403);
 	exit();
 }

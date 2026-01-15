@@ -7,7 +7,7 @@ $page = isset($_GET["page"]) && $_GET["page"] != "" ? $_GET["page"] : "/";
 $info = null;
 $auth_status = venus_authenticate_session($_POST['password'] ?? null, $info);
 
-if ($auth_status == VenusAuthStatus::Allowed) {
+if ($auth_status == VenusAuthStatus::Allowed || $auth_status == VenusAuthStatus::AllowedUnsecured) {
 	http_response_code(303); // See Other
 	header("Location: " . $page);
 	exit();

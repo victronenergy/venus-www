@@ -6,6 +6,7 @@ $auth_status = venus_authenticate_session();
 
 switch ($auth_status) {
 case VenusAuthStatus::Allowed;
+case VenusAuthStatus::AllowedUnsecured;
 	http_response_code(200); // OK
 	exit();
 case VenusAuthStatus::PasswordRequired;
