@@ -18,6 +18,22 @@ function generate_random_string(int $length = 32): string
 	return $randomString;
 }
 
+function get_system_uptime_in_seconds(): int
+{
+	$uptimeFile = '/proc/uptime';
+
+	if (!is_readable($uptimeFile))
+		return -1;
+
+	$content = file_get_contents($uptimeFile);
+
+	if ($content === false)
+		return -1;
+
+	$parts = explode(' ', $content);
+	return intval($parts[0]);
+}
+
 /*
  * Places a json file with the token to be added to the token database.
  * Venus Platform will look at the watched dir and actually add them.
@@ -107,10 +123,13 @@ function in_pairing_mode() : bool
 	if (!property_exists($data, 'expires_at'))
 		return false;
 
-	// XXX: this code has a Year 2038 problem! The system / Qt has 64 bits
-	// timestamp, but php has 32 bits ones.
+	$current_uptime = get_system_uptime_in_seconds();
+
+	if ($current_uptime < 0)
+		return false;
+
 	$expires_at = intval($data->expires_at);
-	return $expires_at > time();
+	return $expires_at > $current_uptime;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
