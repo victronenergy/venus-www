@@ -2,7 +2,12 @@
 
 require('session.php');
 
-$auth_status = venus_authenticate_session();
+
+if (isset($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW'])) {
+	$auth_status = venus_authenticate_basic_auth_with_token();
+} else {
+	$auth_status = venus_authenticate_session();
+}
 
 switch ($auth_status) {
 case VenusAuthStatus::Allowed:

@@ -13,6 +13,8 @@ define("LOCKOUT_TIME", (2 * 60));
 define("LOCKOUT_IDLE_RESET", (24 * 60 * 60));
 define("SESSION_ID", "VENUS_SESSION_ID");
 
+define("TOKEN_FILE", "/data/conf/tokens.json");
+
 enum VenusAuthStatus: string {
 	case Allowed = "Allowed";
 	case AllowedUnsecured = "AllowedUnsecured";
@@ -210,11 +212,87 @@ function venus_authenticate(?string $password, &$info = null): VenusAuthStatus
 	return ($correct === true ? VenusAuthStatus::Allowed : VenusAuthStatus::WrongPassword);
 }
 
-// like above, only succeeds if the basic password matches
+function venus_authenticate_token(?string $token_name, ?string $password, &$info = null): VenusAuthStatus
+{
+	if (is_null($token_name) || $token_name === "")
+		return VenusAuthStatus::InvalidUser;
+
+	if (is_null($password))
+		return VenusAuthStatus::PasswordRequired;
+
+	$configured = file_exists(TOKEN_FILE);
+	if (!$configured)
+		return VenusAuthStatus::InvalidUser;
+
+	$json = @file_get_contents(TOKEN_FILE);
+	if ($json === false) {
+		http_response_code(500); // Internal Server Error
+		exit();
+	}
+
+	$tokens = json_decode($json);
+	if ($tokens === null && trim($json) !== "") {
+		http_response_code(500); // Internal Server Error
+		exit();
+	}
+
+	if (!is_array($tokens)) {
+		http_response_code(500); // Internal Server Error
+		exit();
+	}
+
+	// Lookup the given username to not have to perform password_verify on all tokens
+	$hash = null;
+	foreach ($tokens as $token) {
+		if (
+			!is_object($token) ||
+			!isset($token->token_name) ||
+			!is_string($token->token_name) ||
+			$token->token_name === "" ||
+			!isset($token->password_hash) ||
+			!is_string($token->password_hash) ||
+			$token->password_hash === ""
+		) {
+			http_response_code(500); // Internal Server Error
+			exit();
+		}
+
+		if ($token->token_name === $token_name) {
+			$hash = $token->password_hash;
+			break;
+		}
+	}
+
+	if ($hash === null)
+		return VenusAuthStatus::InvalidUser;
+
+	$info = LockedOutInfo::load($token_name);
+
+	$lockout_duration = $info->lockedOutDuration();
+	if ($lockout_duration > 0) {
+		$info->close();
+		return VenusAuthStatus::LockedOut;
+	}
+
+	$correct = password_verify($password, $hash);
+	$info->loginAttempted($correct);
+	$info->close();
+
+	return ($correct === true ? VenusAuthStatus::Allowed : VenusAuthStatus::WrongPassword);
+}
+
 function venus_authenticate_basic_auth(&$info = null): VenusAuthStatus
 {
 	if ($_SERVER['PHP_AUTH_USER'] !== "remoteconsole")
 		return VenusAuthStatus::InvalidUser;
+
+	return venus_authenticate($_SERVER['PHP_AUTH_PW'] ?? null, $info);
+}
+
+function venus_authenticate_basic_auth_with_token(&$info = null): VenusAuthStatus
+{
+	if ($_SERVER['PHP_AUTH_USER'] !== "remoteconsole")
+		return venus_authenticate_token($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW'] ?? null, $info);
 
 	return venus_authenticate($_SERVER['PHP_AUTH_PW'] ?? null, $info);
 }
