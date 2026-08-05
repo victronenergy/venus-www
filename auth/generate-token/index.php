@@ -55,7 +55,7 @@ function place_token_request(string $token_name, string $password): void
 
 	$user_data = [
 		'token_name' => $token_name,
-		'password_hash' => password_hash($password, PASSWORD_BCRYPT)
+		'password_hash' => password_hash($password, PASSWORD_BCRYPT, ['cost' => 4])
 	];
 	$new_json_text = json_encode($user_data, JSON_UNESCAPED_SLASHES);
 
