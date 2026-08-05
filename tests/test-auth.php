@@ -55,7 +55,7 @@ class TestLockedOut extends Test
 	{
 		@unlink(RATELIMIT_FILE);
 
-		$info = LockedOutInfo::load();
+		$info = LockedOutInfo::load("remoteconsole");
 
 		// initial attempt should not lock out
 		for ($n = 10; --$n > 0; ) {

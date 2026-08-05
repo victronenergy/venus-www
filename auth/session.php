@@ -7,7 +7,6 @@
 error_reporting(0);
 
 define("PWD_FILE", "/data/conf/vncpassword.txt");
-define("RATELIMIT_FILE", "/tmp/test.json");
 define("MAX_LOGIN_ATTEMPTS", 10);
 define("MAX_LOCK_LEVEL", 6);
 define("LOCKOUT_TIME", (2 * 60));
@@ -88,9 +87,16 @@ class LockedOutInfo implements JsonSerializable {
 		return $this->lockedout_till - $this->stamp;
 	}
 
-	public static function load(): LockedOutInfo
+	private static function getFilename(string $username = "remoteconsole"): string
 	{
-		$fh = fopen(RATELIMIT_FILE, "c+");
+		// Encode username to URL-safe base64 for the filename
+		$encoded_username = rtrim(strtr(base64_encode($username), '+/', '-_'), '=');
+		return "/tmp/nginx-auth-ratelimit-" . $encoded_username . ".json";
+	}
+
+	public static function load(string $username): LockedOutInfo
+	{
+		$fh = fopen(self::getFilename($username), "c+");
 
 		if ($fh  === false) {
 			http_response_code(500); // Internal Server Error
@@ -184,7 +190,7 @@ function venus_authenticate(?string $password, &$info = null): VenusAuthStatus
 	if (is_null($password))
 		return VenusAuthStatus::PasswordRequired;
 
-	$info = LockedOutInfo::load();
+	$info = LockedOutInfo::load("remoteconsole");
 
 	$lockout_duration = $info->lockedOutDuration();
 	if ($lockout_duration > 0) {
