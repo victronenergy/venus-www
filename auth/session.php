@@ -192,11 +192,6 @@ function venus_authenticate(?string $password, &$info = null): VenusAuthStatus
 		return VenusAuthStatus::LockedOut;
 	}
 
-	if (password_verify($password, $hash)) {
-		$info->close();
-		return VenusAuthStatus::Allowed;
-	}
-
 	$correct = password_verify($password, $hash);
 	$info->loginAttempted($correct);
 	$info->close();
