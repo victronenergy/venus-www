@@ -13,6 +13,7 @@ case VenusAuthStatus::PasswordRequired:
 	http_response_code(401); // Authentication required
 	exit();
 case VenusAuthStatus::NotConfigured:
+case VenusAuthStatus::WrongPassword:
 	http_response_code(403); // Forbidden
 	exit();
 default:
