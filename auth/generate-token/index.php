@@ -34,55 +34,6 @@ function get_system_uptime_in_seconds(): int
 	return intval($parts[0]);
 }
 
-/*
- * Places a json file with the token to be added to the token database.
- * Venus Platform will look at the watched dir and actually add them.
- */
-function place_token_request(string $token_name, string $password): void
-{
-	// note: this should be on the same parition as /tmp
-	static $watched_dir = "/var/volatile/tokens";
-
-	if (!is_dir($watched_dir))
-		throw new Exception("Directory $watched_dir is not there.");
-
-	if (!is_writable($watched_dir))
-		throw new Exception("Directory $watched_dir is not writable.");
-
-	$tmp_path = tempnam("/tmp", "tmp_new_token_");
-	if ($tmp_path === false)
-		throw new Exception("Can't create temp file for token generation");
-
-	$user_data = [
-		'token_name' => $token_name,
-		'password_hash' => password_hash($password, PASSWORD_BCRYPT, ['cost' => 4])
-	];
-	$new_json_text = json_encode($user_data, JSON_UNESCAPED_SLASHES);
-
-	$tmp_file_handle = fopen($tmp_path, "w");
-
-	if ($tmp_file_handle === false)
-		throw new Exception("Can't open file for writing");
-
-	$write_result = fwrite($tmp_file_handle, $new_json_text);
-	fsync($tmp_file_handle);
-	fclose($tmp_file_handle);
-
-	if ($write_result === false) {
-		unlink($tmp_path);
-		throw new Exception("Failed to write new tokens file");
-	}
-
-	// Save the file uniquely per token_name, if multiple simultaneous request are
-	// made the last one will win. base64 encode it, so .. and / etc cannot be used
-	// to write to a different directory.
-	$new_token_file_path = $watched_dir . "/" . base64_encode($token_name) . ".json";
-	if (rename($tmp_path, $new_token_file_path) === false) {
-		unlink($tmp_path);
-		throw new Exception("Renaming to final file failed");
-	}
-}
-
 function get_query_argument(string $arg_name): ?string
 {
 	$val = $_POST[$arg_name] ?? null;
