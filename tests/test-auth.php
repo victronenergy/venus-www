@@ -5,6 +5,10 @@ require(__DIR__ . "/../auth/session.php");
 define("PWD_HASH", '$2a$08$Wx.0KRjfWhKxWhfhWx.0KO/kf0mdv9ELH7h2pYPwMlV3NoW9MmCUe');
 define("VALID_PASSWD", "00000000");
 define("INVALID_PASSWD", "xxxxxxxxx");
+define("TOKEN_USER", "token/TokenRole/TokenDeviceId");
+define("TOKEN_PASSWD", "01234567890123456789012345678901");
+define("INVALID_TOKEN_USER", "token/TokenRole/InvalidDeviceId");
+define("INVALID_TOKEN_PASSWD", "12345678901234567890123456789012");
 
 class Test {
 	public function assert($msg) {
@@ -45,6 +49,72 @@ class TestVenusAuthenticate extends Test
 		$this->assertEqual($info->lockedout_till - $info->stamp, 120, "initial 2min lock out");
 
 		if (venus_authenticate(INVALID_PASSWD, $info) !== VenusAuthStatus::LockedOut)
+			$this->assert("should still be locked out");
+	}
+}
+
+class TestBasicAuthWithToken extends Test
+{
+	public function run()
+	{
+		/* Remove all json files in /var/volatile/tokens */
+		$files = glob("/var/volatile/tokens/*.json");
+		if ($files !== false) {
+			foreach ($files as $file) {
+				@unlink($file);
+			}
+		}
+		@unlink(TOKEN_FILE);
+		LockedOutInfo::unlinkFile(TOKEN_USER);
+
+		if (venus_authenticate_token(TOKEN_USER, TOKEN_PASSWD, $info) != VenusAuthStatus::InvalidUser)
+			$this->assert("user should not be allowed to login when there is no token file");
+
+
+		place_token_request(TOKEN_USER, TOKEN_PASSWD);
+		/* Merge any token file in /var/volatile/tokens to TOKEN_FILE.
+		 * 1. Create an empty array
+		 * 2. For each json file in /var/volatile/tokens, decode it and add it to the array
+		 * 3. Write the array to TOKEN_FILE
+		 */
+		$all_tokens = [];
+		$files = glob("/var/volatile/tokens/*.json");
+		if ($files !== false) {
+			foreach ($files as $file) {
+				$token = json_decode(file_get_contents($file), true);
+				if ($token !== null) {
+					$all_tokens[] = $token;
+				}
+			}
+		}
+		file_put_contents(TOKEN_FILE, json_encode($all_tokens, JSON_UNESCAPED_SLASHES));
+
+		if (venus_authenticate_token(TOKEN_USER, TOKEN_PASSWD) != VenusAuthStatus::Allowed)
+			$this->assert("invalid token user should not be allowed to login");
+
+		if (venus_authenticate_token(null, TOKEN_PASSWD, $info) != VenusAuthStatus::InvalidUser)
+			$this->assert("user should not be allowed to login when no username is given");
+
+		if (venus_authenticate_token("", TOKEN_PASSWD, $info) != VenusAuthStatus::InvalidUser)
+			$this->assert("user should not be allowed to login when no username is given");
+
+		if (venus_authenticate_token(INVALID_TOKEN_USER, TOKEN_PASSWD, $info) != VenusAuthStatus::InvalidUser)
+			$this->assert("invalid token user should not be allowed to login");
+
+		if (venus_authenticate_token(TOKEN_USER, null, $info) != VenusAuthStatus::PasswordRequired)
+			$this->assert("user should not be allowed to login when no password is given");
+
+		for ($n = 0; $n < 10; $n++) {
+			if (venus_authenticate_token(TOKEN_USER, INVALID_PASSWD, $info) != VenusAuthStatus::WrongPassword)
+				$this->assert("10 attempts should be allowed before blocking");
+		}
+
+		if (venus_authenticate_token(TOKEN_USER, INVALID_PASSWD, $info) !== VenusAuthStatus::LockedOut)
+			$this->assert("didn't get blocked after more then 10 attempts");
+
+		$this->assertEqual($info->lockedout_till - $info->stamp, 120, "initial 2min lock out");
+
+		if (venus_authenticate_token(TOKEN_USER, INVALID_PASSWD, $info) !== VenusAuthStatus::LockedOut)
 			$this->assert("should still be locked out");
 	}
 }
@@ -133,8 +203,9 @@ if (!fwrite($fh, PWD_HASH)) {
 fclose($fh);
 
 $tests = [
+	new TestLockedOut(),
 	new TestVenusAuthenticate(),
-	new TestLockedOut()
+	new TestBasicAuthWithToken()
 ];
 
 $failed = 0;
