@@ -54,6 +54,7 @@ class TestLockedOut extends Test
 	public function run()
 	{
 		LockedOutInfo::unlinkFile("remoteconsole");
+		LockedOutInfo::unlinkFile("not_remoteconsole");
 
 		$info = LockedOutInfo::load("remoteconsole");
 
@@ -85,6 +86,10 @@ class TestLockedOut extends Test
 		$this->assertEqual($info->lockedout_till - $info->stamp, 64 * 60, "There is a maximum lockout time of 64 minutes");
 		$this->assertEqual($info->attempts_left, 1, "in locked state, there is only 1 attempt");
 
+		$info2 = LockedOutInfo::load("not_remoteconsole");
+		$this->assertEqual($info2->attempts_left, 10, "different user should have full attempts");
+		$this->assertEqual($info2->lockedout_till, 0, "different user should not lock out");
+
 		$info->loginAttempted(true);
 		$this->assertEqual($info->lockedout_till, 0, "1: a valid login should reset the locked state");
 		$this->assertEqual($info->attempts_left, 10, "2: a valid login should reset the locked state");
@@ -97,6 +102,22 @@ class TestLockedOut extends Test
 		$info->loginAttempted(true);
 		$this->assertEqual($info->lockedout_till, 0, "1: if the device is no longer bombarded for quite some it should reset the locked state");
 		$this->assertEqual($info->attempts_left, 10, "2: if the device is no longer bombarded for quite some it should reset the locked state");
+
+		// initial attempt of different user name should not lock out
+		for ($n = 10; --$n > 0; ) {
+			$info2->loginAttempted(false);
+			$this->assertEqual($info2->attempts_left, $n, "attempts should become less");
+			$this->assertEqual($info2->lockedout_till, 0, "initial attempts should not lock out");
+		}
+
+		// the 10th of a different username will
+		$info2->loginAttempted(false);
+		$this->assertNotEqual($info2->lockedout_till, 0, "5: enough invalid attempts should lock out");
+		$this->assertEqual($info2->lockedout_till - $info2->stamp, 120, "5: enough invalid attempts should lock out for 2 minutes");
+		$this->assertEqual($info2->attempts_left, 1, "5: in locked state, there is only 1 attempt");
+
+		$this->assertEqual($info->lockedout_till, 0, "5_1: a different user should not be locked out");
+		$this->assertEqual($info->attempts_left, 10, "5_2: a different user should have full attempts");
 	}
 }
 
