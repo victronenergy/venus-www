@@ -29,7 +29,7 @@ class TestVenusAuthenticate extends Test
 {
 	public function run()
 	{
-		@unlink(RATELIMIT_FILE);
+		LockedOutInfo::unlinkFile("remoteconsole");
 
 		if (venus_authenticate(VALID_PASSWD, $info) != VenusAuthStatus::Allowed)
 			$this->assert("valid password is not allowed to login");
@@ -53,7 +53,7 @@ class TestLockedOut extends Test
 {
 	public function run()
 	{
-		@unlink(RATELIMIT_FILE);
+		LockedOutInfo::unlinkFile("remoteconsole");
 
 		$info = LockedOutInfo::load("remoteconsole");
 

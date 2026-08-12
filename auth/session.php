@@ -94,6 +94,11 @@ class LockedOutInfo implements JsonSerializable {
 		return "/tmp/nginx-auth-ratelimit-" . $encoded_username . ".json";
 	}
 
+	public static function unlinkFile(string $username): void
+	{
+		@unlink(self::getFilename($username));
+	}
+
 	public static function load(string $username): LockedOutInfo
 	{
 		$fh = fopen(self::getFilename($username), "c+");
