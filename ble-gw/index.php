@@ -129,35 +129,35 @@ function process_request(): void
 {
 	if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 		http_response_code(405);
-		echo json_encode(['error' => 'Method not allowed']);
+		echo json_encode(['error' => 'Method not allowed'], JSON_UNESCAPED_SLASHES);
 		return;
 	}
 
 	$content_type = $_SERVER['CONTENT_TYPE'] ?? '';
 	if (strpos($content_type, 'application/json') === false) {
 		http_response_code(415);
-		echo json_encode(['error' => 'Content-Type must be application/json']);
+		echo json_encode(['error' => 'Content-Type must be application/json'], JSON_UNESCAPED_SLASHES);
 		return;
 	}
 
 	$content_length = intval($_SERVER['CONTENT_LENGTH'] ?? 0);
 	if ($content_length > MAX_INPUT_SIZE || $content_length === 0) {
 		http_response_code(413);
-		echo json_encode(['error' => 'Request too large or empty']);
+		echo json_encode(['error' => 'Request too large or empty'], JSON_UNESCAPED_SLASHES);
 		return;
 	}
 
 	$input = file_get_contents('php://input', false, null, 0, MAX_INPUT_SIZE);
 	if ($input === false || strlen($input) === 0) {
 		http_response_code(400);
-		echo json_encode(['error' => 'Empty request body']);
+		echo json_encode(['error' => 'Empty request body'], JSON_UNESCAPED_SLASHES);
 		return;
 	}
 
 	$json = json_decode($input, true);
 	if ($json === null || json_last_error() !== JSON_ERROR_NONE) {
 		http_response_code(400);
-		echo json_encode(['error' => 'Invalid JSON: ' . json_last_error_msg()]);
+		echo json_encode(['error' => 'Invalid JSON: ' . json_last_error_msg()], JSON_UNESCAPED_SLASHES);
 		return;
 	}
 
@@ -166,20 +166,20 @@ function process_request(): void
 	$gw_mac = $data['gw_mac'] ?? null;
 	if ($gw_mac !== null && !validate_mac($gw_mac)) {
 		http_response_code(400);
-		echo json_encode(['error' => 'Invalid gateway MAC address']);
+		echo json_encode(['error' => 'Invalid gateway MAC address'], JSON_UNESCAPED_SLASHES);
 		return;
 	}
 
 	$tags = $data['tags'] ?? null;
 	if ($tags === null || !is_array($tags)) {
 		http_response_code(400);
-		echo json_encode(['error' => 'Missing or invalid tags array']);
+		echo json_encode(['error' => 'Missing or invalid tags array'], JSON_UNESCAPED_SLASHES);
 		return;
 	}
 
 	if (count($tags) > MAX_TAGS_PER_REQUEST) {
 		http_response_code(400);
-		echo json_encode(['error' => 'Too many tags']);
+		echo json_encode(['error' => 'Too many tags'], JSON_UNESCAPED_SLASHES);
 		return;
 	}
 
@@ -241,7 +241,7 @@ function process_request(): void
 		'forwarded' => $forwarded,
 		'errors' => $errors,
 		'rejected' => $rejected
-	]);
+	], JSON_UNESCAPED_SLASHES);
 }
 
 process_request();
