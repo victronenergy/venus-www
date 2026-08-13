@@ -27,6 +27,8 @@ define('MAX_MFG_DATA_SIZE', 255);	   // Max manufacturer data (fits in uint8)
 define('MIN_RSSI', -128);
 define('MAX_RSSI', 126);
 
+require_once __DIR__ . '/../lib/token_bucket.php';
+
 /**
  * Validate MAC address format
  */
@@ -127,6 +129,14 @@ function send_udp(string $packet): bool
  */
 function process_request(): void
 {
+	$token_bucket = new TokenBucket(20, 1);
+
+	if ($token_bucket->consume_token($_SERVER['REMOTE_ADDR'] ?? "default") === false) {
+		http_response_code(429);
+		echo json_encode(['error' => 'Too many requests'], JSON_UNESCAPED_SLASHES);
+		return;
+	}
+
 	if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 		http_response_code(405);
 		echo json_encode(['error' => 'Method not allowed'], JSON_UNESCAPED_SLASHES);
