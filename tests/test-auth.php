@@ -2,6 +2,8 @@
 
 require(__DIR__ . "/../auth/session.php");
 
+error_reporting(E_ALL);
+
 define("PWD_HASH", '$2a$08$Wx.0KRjfWhKxWhfhWx.0KO/kf0mdv9ELH7h2pYPwMlV3NoW9MmCUe');
 define("VALID_PASSWD", "00000000");
 define("INVALID_PASSWD", "xxxxxxxxx");
