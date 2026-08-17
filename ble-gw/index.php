@@ -235,9 +235,8 @@ function process_request(): void
 		}
 	}
 
-	http_response_code(200);
+	http_response_code(201);
 	echo json_encode([
-		'status' => 'ok',
 		'forwarded' => $forwarded,
 		'errors' => $errors,
 		'rejected' => $rejected
