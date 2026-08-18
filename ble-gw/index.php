@@ -20,10 +20,10 @@ define('BLE_SOCKET_VERSION_V2', 0x02);
 
 // Security limits
 define('MAX_INPUT_SIZE', 65536);		// 64KB max
-define('MAX_TAGS_PER_REQUEST', 50);	 // Max sensors per request
-define('MAX_ADV_DATA_SIZE', 512);	   // Max advertisement data size
-define('MAX_ADV_DATA_SIZE_HEX', 1024);  // Max advertisement data size (hex encoded)
-define('MAX_MFG_DATA_SIZE', 255);	   // Max manufacturer data (fits in uint8)
+define('MAX_TAGS_PER_REQUEST', 50);		// Max sensors per request
+define('MAX_ADV_DATA_SIZE', 512);		// Max advertisement data size
+define('MAX_ADV_DATA_SIZE_HEX', 1024);	// Max advertisement data size (hex encoded)
+define('MAX_MFG_DATA_SIZE', 255);		// Max manufacturer data (fits in uint8)
 define('MIN_RSSI', -128);
 define('MAX_RSSI', 126);
 
