@@ -7,87 +7,6 @@
 
 require('../session.php');
 
-function generate_random_string(int $length = 32): string
-{
-	$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-	$charactersLength = strlen($characters);
-	$randomString = '';
-	for ($i = 0; $i < $length; $i++)
-		$randomString .= $characters[random_int(0, $charactersLength - 1)];
-
-	return $randomString;
-}
-
-function get_system_uptime_in_seconds(): int
-{
-	$uptimeFile = '/proc/uptime';
-
-	if (!is_readable($uptimeFile))
-		return -1;
-
-	$content = file_get_contents($uptimeFile);
-
-	if ($content === false)
-		return -1;
-
-	$parts = explode(' ', $content);
-	return intval($parts[0]);
-}
-
-/*
- * Places a json file with the token to be added to the token database.
- * Venus Platform will look at the watched dir and actually add them.
- *
- * note: $dir should be on the same parition as /tmp
- */
-function place_token_request(string $watched_dir, string $token_name, string $hash): void
-{
-	if (!is_dir($watched_dir))
-		throw new Exception("Directory $watched_dir is not there.");
-
-	if (!is_writable($watched_dir))
-		throw new Exception("Directory $watched_dir is not writable.");
-
-	$tmp_path = tempnam("/tmp", "tmp_new_token_");
-	if ($tmp_path === false)
-		throw new Exception("Can't create temp file for token generation");
-
-	$user_data = [
-		'token_name' => $token_name,
-		'password_hash' => $hash
-	];
-	$new_json_text = json_encode($user_data, JSON_UNESCAPED_SLASHES);
-
-	$tmp_file_handle = fopen($tmp_path, "w");
-
-	if ($tmp_file_handle === false)
-		throw new Exception("Can't open file for writing");
-
-	$write_result = fwrite($tmp_file_handle, $new_json_text);
-	fsync($tmp_file_handle);
-	fclose($tmp_file_handle);
-
-	if ($write_result === false) {
-		unlink($tmp_path);
-		throw new Exception("Failed to write new tokens file");
-	}
-
-	// Save the file uniquely per token_name, if multiple simultaneous request are
-	// made the last one will win. base64 encode it, so .. and / etc cannot be used
-	// to write to a different directory.
-	$new_token_file_path = $watched_dir . "/" . base64_encode($token_name) . ".json";
-	if (rename($tmp_path, $new_token_file_path) === false) {
-		unlink($tmp_path);
-		throw new Exception("Renaming to final file failed");
-	}
-}
-
-function place_token_request_bcrypt(string $watched_dir, string $token_name, string $password): void
-{
-	$hash = password_hash($password, PASSWORD_BCRYPT);
-	place_token_request($dir, $token_name, $hash);
-}
-
 function get_query_argument(string $arg_name): ?string
 {
 	$val = $_POST[$arg_name] ?? null;
@@ -105,36 +24,6 @@ function get_query_argument(string $arg_name): ?string
 	}
 
 	return $val;
-}
-
-// Venus Platform sets the pairing mode.
-function in_pairing_mode() : bool
-{
-	static $signal_file = "/var/volatile/tokens/pairing.json";
-
-	if (!file_exists($signal_file))
-		return false;
-
-	$bytes = file_get_contents($signal_file);
-
-	if ($bytes === false)
-		return false;
-
-	$data = json_decode($bytes);
-
-	if ($data === false)
-		return false;
-
-	if (!property_exists($data, 'expires_at'))
-		return false;
-
-	$current_uptime = get_system_uptime_in_seconds();
-
-	if ($current_uptime < 0)
-		return false;
-
-	$expires_at = intval($data->expires_at);
-	return $expires_at > $current_uptime;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
