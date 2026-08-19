@@ -37,12 +37,11 @@ function get_system_uptime_in_seconds(): int
 /*
  * Places a json file with the token to be added to the token database.
  * Venus Platform will look at the watched dir and actually add them.
+ *
+ * note: $dir should be on the same parition as /tmp
  */
-function place_token_request(string $token_name, string $password): void
+function place_token_request(string $watched_dir, string $token_name, string $hash): void
 {
-	// note: this should be on the same parition as /tmp
-	static $watched_dir = "/var/volatile/tokens";
-
 	if (!is_dir($watched_dir))
 		throw new Exception("Directory $watched_dir is not there.");
 
@@ -55,7 +54,7 @@ function place_token_request(string $token_name, string $password): void
 
 	$user_data = [
 		'token_name' => $token_name,
-		'password_hash' => password_hash($password, PASSWORD_BCRYPT)
+		'password_hash' => $hash
 	];
 	$new_json_text = json_encode($user_data, JSON_UNESCAPED_SLASHES);
 
@@ -81,6 +80,12 @@ function place_token_request(string $token_name, string $password): void
 		unlink($tmp_path);
 		throw new Exception("Renaming to final file failed");
 	}
+}
+
+function place_token_request_bcrypt(string $watched_dir, string $token_name, string $password): void
+{
+	$hash = password_hash($password, PASSWORD_BCRYPT);
+	place_token_request($dir, $token_name, $hash);
 }
 
 function get_query_argument(string $arg_name): ?string
@@ -169,7 +174,7 @@ if ($j === false) {
 }
 
 try {
-	place_token_request($username, $password);
+	place_token_request_bcrypt(TOKENS_DIR, $username, $password);
 } catch (Exception $ex) {
 	http_response_code(500);
 	exit();

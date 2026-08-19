@@ -13,6 +13,8 @@ define("MAX_LOCK_LEVEL", 6);
 define("LOCKOUT_TIME", (2 * 60));
 define("LOCKOUT_IDLE_RESET", (24 * 60 * 60));
 define("SESSION_ID", "VENUS_SESSION_ID");
+// venus-platform will handle the new tokens and announce them on the dbus.
+define('TOKENS_DIR', '/var/volatile/tokens');
 
 enum VenusAuthStatus: string {
 	case Allowed = "Allowed";
