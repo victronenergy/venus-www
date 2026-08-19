@@ -15,6 +15,8 @@ define("LOCKOUT_IDLE_RESET", (24 * 60 * 60));
 define("SESSION_ID", "VENUS_SESSION_ID");
 // venus-platform will handle the new tokens and announce them on the dbus.
 define('TOKENS_DIR', '/var/volatile/tokens');
+define("BLE_TOKEN_FILE", "/data/conf/bletokens.json");
+define('BLE_TOKENS_DIR', '/var/volatile/bletokens');
 
 enum VenusAuthStatus: string {
 	case Allowed = "Allowed";
@@ -352,4 +354,67 @@ function place_token_request_bcrypt(string $watched_dir, string $token_name, str
 {
 	$hash = password_hash($password, PASSWORD_BCRYPT);
 	place_token_request($watched_dir, $token_name, $hash);
+}
+
+// NOTE: only to be used with a long random password!
+function place_token_request_sha256(string $dir, string $token_name, string $password): void
+{
+	$hash = '$sha256$$' . hash('sha256', $password);
+	place_token_request($dir, $token_name, $hash);
+}
+
+function verify_sha256_hash(string $provided_token, string $stored_string): bool
+{
+	$parts = explode('$', $stored_string);
+
+	// Format check: expects ["", "sha256", "", "<hash>"]
+	if (count($parts) !== 4 || $parts[1] !== 'sha256')
+		return false;
+
+	$hash = $parts[3];
+	$computed_hash = hash('sha256', $provided_token);
+
+	return hash_equals($hash, $computed_hash);
+}
+
+function venus_authenticate_ble_token(?string $token_name, ?string $password): VenusAuthStatus
+{
+	$hash = @file_get_contents(PWD_FILE);
+	if (trim($hash) === "")
+		return VenusAuthStatus::AllowedUnsecured;
+
+	if (is_null($token_name))
+		return VenusAuthStatus::InvalidUser;
+
+	if (is_null($password))
+		return VenusAuthStatus::PasswordRequired;
+
+	$json = @file_get_contents(BLE_TOKEN_FILE);
+	if ($json === false)
+		return VenusAuthStatus::NotConfigured;
+
+	$tokens = json_decode($json);
+	if ($tokens === null)
+		return VenusAuthStatus::NotConfigured;
+
+	if (!is_array($tokens))
+		return VenusAuthStatus::NotConfigured;
+
+	$hash = null;
+	foreach ($tokens as $token) {
+		if (!is_object($token) || !isset($token->token_name) || !is_string($token->token_name) ||
+			!isset($token->password_hash) || !is_string($token->password_hash))
+			continue;
+
+		if ($token->token_name === $token_name) {
+			$hash = $token->password_hash;
+			break;
+		}
+	}
+
+	if ($hash === null)
+		return VenusAuthStatus::InvalidUser;
+
+	$correct = verify_sha256_hash($password, $hash);
+	return ($correct === true ? VenusAuthStatus::Allowed : VenusAuthStatus::WrongPassword);
 }

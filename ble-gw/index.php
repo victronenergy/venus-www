@@ -5,11 +5,13 @@
  * Receives HTTP POST from Ruuvi Gateway or Shelly, extracts BLE advertisement data,
  * and forwards it to the dbus-ble-sensors UDP socket.
  *
+ * curl -k -v --user "remoteconsole:00000000" --json '{"generate_token": {"device_id": "test"}}' https://xxx.xxx.xxx.xxx/ble-gw/
  * curl -k -v --user "user_from_above:pwd_from_above" --json '{"data":{"tags":{"AA:BB:CC:DD:EE:02":{"data":"1affe10210000000ff00000100000000ff8813204e0034a1063102050974657374","rssi":-55}}}}' https://xxx.xxx.xxx.xxx/ble-gw/
  */
 
-error_reporting(0);
 header('Content-Type: application/json');
+
+require('../auth/session.php');
 
 define('UDP_HOST', '127.0.0.1');
 define('UDP_PORT', 18542);
@@ -160,6 +162,47 @@ function process_request(): void
 	if ($json === null || json_last_error() !== JSON_ERROR_NONE) {
 		http_response_code(400);
 		echo json_encode(['error' => 'Invalid JSON: ' . json_last_error_msg()], JSON_UNESCAPED_SLASHES);
+		return;
+	}
+
+	// Adding a new token is only allowed with the remote console login or when in pairing mode.
+	if (isset($json['generate_token']) && is_array($json['generate_token'])) {
+		$generate_token = $json['generate_token'];
+		if (in_pairing_mode())
+			$auth_state = VenusAuthStatus::Allowed;
+		else
+			$auth_state = venus_authenticate_basic_auth();
+
+		if ($auth_state != VenusAuthStatus::Allowed && $auth_state != VenusAuthStatus::AllowedUnsecured) {
+			http_response_code(403);
+			echo json_encode(['error' => 'Not allowed'], JSON_UNESCAPED_SLASHES);
+			return;
+		}
+
+		if (!isset($generate_token['device_id']) || !is_string($generate_token['device_id'])) {
+			http_response_code(400);
+			echo json_encode(['error' => 'No device_id given'], JSON_UNESCAPED_SLASHES);
+			return;
+		}
+
+		$username = "ble_token/ble_gw/{$generate_token['device_id']}";
+		$password = generate_random_string(32);
+
+		try {
+			place_token_request_sha256(BLE_TOKENS_DIR, $username, $password);
+			echo json_encode(['token_name' => $username, 'password' => $password], JSON_UNESCAPED_SLASHES) . "\n";
+		} catch (Exception $ex) {
+			// var_dump($ex); lets not leak internal details to the client
+			http_response_code(500);
+			echo json_encode(['error' => 'Unexpected error'], JSON_UNESCAPED_SLASHES);
+		}
+		return;
+	}
+
+	$auth = venus_authenticate_ble_token($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']);
+	if ($auth != VenusAuthStatus::Allowed && $auth != VenusAuthStatus::AllowedUnsecured) {
+		http_response_code(403);
+		echo json_encode(['error' => 'Not allowed'], JSON_UNESCAPED_SLASHES);
 		return;
 	}
 
