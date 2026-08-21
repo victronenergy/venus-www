@@ -4,6 +4,8 @@
  *
  * Receives HTTP POST from Ruuvi Gateway or Shelly, extracts BLE advertisement data,
  * and forwards it to the dbus-ble-sensors UDP socket.
+ *
+ * curl -k -v --user "user_from_above:pwd_from_above" --json '{"data":{"tags":{"AA:BB:CC:DD:EE:02":{"data":"1affe10210000000ff00000100000000ff8813204e0034a1063102050974657374","rssi":-55}}}}' https://xxx.xxx.xxx.xxx/ble-gw/
  */
 
 error_reporting(0);
